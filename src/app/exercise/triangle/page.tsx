@@ -6,6 +6,10 @@ import {
   getSettings,
   getPureRedColor,
   getPureGreenColor,
+  increaseSize,
+  decreaseSize,
+  cycleRedIntensity,
+  cycleGreenIntensity,
 } from "../../lib/settings";
 
 export default function TriangleExercise() {
@@ -61,6 +65,26 @@ export default function TriangleExercise() {
       case "Escape":
         event.preventDefault();
         setShowInstructions((prev) => !prev);
+        break;
+      case "+":
+      case "=":
+        event.preventDefault();
+        setSettings(increaseSize());
+        break;
+      case "-":
+      case "_":
+        event.preventDefault();
+        setSettings(decreaseSize());
+        break;
+      case "r":
+      case "R":
+        event.preventDefault();
+        setSettings(cycleRedIntensity());
+        break;
+      case "g":
+      case "G":
+        event.preventDefault();
+        setSettings(cycleGreenIntensity());
         break;
     }
   }, []);
@@ -127,6 +151,15 @@ export default function TriangleExercise() {
             </p>
             <p>
               <strong>↑ ↓</strong> Vertical separation
+            </p>
+            <p>
+              <strong>+ -</strong> Increase/decrease size
+            </p>
+            <p>
+              <strong>R</strong> Cycle red intensity
+            </p>
+            <p>
+              <strong>G</strong> Cycle green intensity
             </p>
             <p>
               <strong>ESC</strong> Toggle instructions

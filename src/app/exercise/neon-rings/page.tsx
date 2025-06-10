@@ -2,11 +2,32 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import {
+  getSettings,
+  getPureRedColor,
+  getPureGreenColor,
+  increaseSize,
+  decreaseSize,
+  cycleRedIntensity,
+  cycleGreenIntensity,
+} from "../../lib/settings";
 
 export default function NeonRingsExercise() {
   const [horizontalSeparation, setHorizontalSeparation] = useState(0);
   const [verticalSeparation, setVerticalSeparation] = useState(0);
   const [showInstructions, setShowInstructions] = useState(true);
+
+  // Settings
+  const [settings, setSettings] = useState({
+    objectSize: 1.0,
+    redIntensity: 0.8,
+    greenIntensity: 0.8,
+  });
+
+  // Load settings on component mount
+  useEffect(() => {
+    setSettings(getSettings());
+  }, []);
 
   const MAX_HORIZONTAL_SEPARATION = 500;
   const MAX_VERTICAL_SEPARATION = 500;
@@ -37,6 +58,26 @@ export default function NeonRingsExercise() {
       case "Escape":
         setShowInstructions((prev) => !prev);
         break;
+      case "+":
+      case "=":
+        event.preventDefault();
+        setSettings(increaseSize());
+        break;
+      case "-":
+      case "_":
+        event.preventDefault();
+        setSettings(decreaseSize());
+        break;
+      case "r":
+      case "R":
+        event.preventDefault();
+        setSettings(cycleRedIntensity());
+        break;
+      case "g":
+      case "G":
+        event.preventDefault();
+        setSettings(cycleGreenIntensity());
+        break;
     }
     event.preventDefault();
   }, []);
@@ -56,79 +97,115 @@ export default function NeonRingsExercise() {
     offsetX: number;
     offsetY: number;
     direction: string;
-  }) => (
-    <div
-      className="absolute"
-      style={{
-        left: "50%",
-        top: "50%",
-        transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
-      }}
-    >
-      {/* Outer ring layers */}
-      {[...Array(5)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full"
-          style={{
-            width: `${120 + i * 20}px`,
-            height: `${120 + i * 20}px`,
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            border: `${4 - i * 0.5}px solid ${color}`,
-            boxShadow: `
-              0 0 ${20 + i * 10}px ${color},
-              inset 0 0 ${15 + i * 5}px ${color}80,
-              0 0 ${40 + i * 20}px ${color}40
-            `,
-            opacity: 0.8 - i * 0.1,
-            animation: `${direction} ${4 + i * 0.5}s linear infinite`,
-          }}
-        />
-      ))}
-
-      {/* Inner pulsing core */}
+  }) => {
+    const size = 120 * settings.objectSize; // 120px base size
+    return (
       <div
-        className="absolute rounded-full left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+        className="absolute"
         style={{
-          width: "60px",
-          height: "60px",
-          background: `radial-gradient(circle, ${color}ff, ${color}80, transparent)`,
-          boxShadow: `
-            0 0 30px ${color},
-            0 0 60px ${color}60,
-            inset 0 0 20px ${color}40
-          `,
-          animation: "corePulse 2s ease-in-out infinite",
+          left: "50%",
+          top: "50%",
+          transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
         }}
-      />
-
-      {/* Orbiting particles */}
-      {[...Array(8)].map((_, i) => (
+      >
         <div
-          key={`particle-${i}`}
-          className="absolute rounded-full"
+          className="relative"
           style={{
-            width: "8px",
-            height: "8px",
-            background: color,
-            boxShadow: `0 0 15px ${color}`,
-            left: "50%",
-            top: "50%",
-            transformOrigin: `0 ${80 + i * 15}px`,
-            transform: "translate(-50%, -50%)",
-            animation: `orbit ${3 + i * 0.2}s linear infinite ${i * 0.3}s`,
+            width: `${size}px`,
+            height: `${size}px`,
+            animation: `${direction} 8s linear infinite`,
           }}
-        />
-      ))}
-    </div>
-  );
+        >
+          {/* Main neon ring */}
+          <div
+            className="absolute rounded-full border-4"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              borderColor: color,
+              boxShadow: `
+                0 0 20px ${color},
+                0 0 40px ${color},
+                0 0 60px ${color},
+                inset 0 0 20px ${color}
+              `,
+            }}
+          />
+
+          {/* Inner ring */}
+          <div
+            className="absolute rounded-full border-2"
+            style={{
+              width: `${size * 0.7}px`,
+              height: `${size * 0.7}px`,
+              top: `${size * 0.15}px`,
+              left: `${size * 0.15}px`,
+              borderColor: color,
+              opacity: 0.7,
+              boxShadow: `
+                0 0 15px ${color},
+                inset 0 0 15px ${color}
+              `,
+            }}
+          />
+
+          {/* Outer ring */}
+          <div
+            className="absolute rounded-full border-2"
+            style={{
+              width: `${size * 1.3}px`,
+              height: `${size * 1.3}px`,
+              top: `${-size * 0.15}px`,
+              left: `${-size * 0.15}px`,
+              borderColor: color,
+              opacity: 0.5,
+              boxShadow: `0 0 30px ${color}`,
+            }}
+          />
+
+          {/* Rotating elements */}
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: `${size * 0.1}px`,
+                height: `${size * 0.1}px`,
+                background: color,
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                transformOrigin: `0 ${size * 0.35}px`,
+                animation: `ringOrbit 3s linear infinite ${i * 0.125}s`,
+                boxShadow: `0 0 10px ${color}`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="relative w-screen h-screen bg-black overflow-hidden">
       <style jsx>{`
         @keyframes rotateClockwise {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        @keyframes rotateCounterClockwise {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(-360deg);
+          }
+        }
+        @keyframes ringOrbit {
           from {
             transform: translate(-50%, -50%) rotate(0deg);
           }
@@ -136,50 +213,19 @@ export default function NeonRingsExercise() {
             transform: translate(-50%, -50%) rotate(360deg);
           }
         }
-        @keyframes rotateCounterClockwise {
-          from {
-            transform: translate(-50%, -50%) rotate(0deg);
-          }
-          to {
-            transform: translate(-50%, -50%) rotate(-360deg);
-          }
-        }
-        @keyframes corePulse {
-          0%,
-          100% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0.8;
-          }
-          50% {
-            transform: translate(-50%, -50%) scale(1.3);
-            opacity: 1;
-          }
-        }
-        @keyframes orbit {
-          from {
-            transform: translate(-50%, -50%) rotate(0deg)
-              translateY(-var(--radius)) rotate(0deg);
-          }
-          to {
-            transform: translate(-50%, -50%) rotate(360deg)
-              translateY(-var(--radius)) rotate(-360deg);
-          }
-        }
         @keyframes electricFlow {
           0% {
             stroke-dashoffset: 0;
-            opacity: 0.8;
           }
           100% {
-            stroke-dashoffset: -628;
-            opacity: 0.4;
+            stroke-dashoffset: -20;
           }
         }
       `}</style>
 
       {/* Red Neon Ring */}
       <NeonRing
-        color="#FF0099"
+        color={getPureRedColor(settings.redIntensity)}
         offsetX={-horizontalSeparation / 2}
         offsetY={-verticalSeparation / 2}
         direction="rotateClockwise"
@@ -187,7 +233,7 @@ export default function NeonRingsExercise() {
 
       {/* Green Neon Ring */}
       <NeonRing
-        color="#00FF99"
+        color={getPureGreenColor(settings.greenIntensity)}
         offsetX={horizontalSeparation / 2}
         offsetY={verticalSeparation / 2}
         direction="rotateCounterClockwise"
@@ -207,9 +253,17 @@ export default function NeonRingsExercise() {
               x2="100%"
               y2="100%"
             >
-              <stop offset="0%" stopColor="#FF0099" stopOpacity="0.8" />
+              <stop
+                offset="0%"
+                stopColor={getPureRedColor(settings.redIntensity)}
+                stopOpacity="0.8"
+              />
               <stop offset="50%" stopColor="#FFFFFF" stopOpacity="1" />
-              <stop offset="100%" stopColor="#00FF99" stopOpacity="0.8" />
+              <stop
+                offset="100%"
+                stopColor={getPureGreenColor(settings.greenIntensity)}
+                stopOpacity="0.8"
+              />
             </linearGradient>
           </defs>
           <line
@@ -273,6 +327,17 @@ export default function NeonRingsExercise() {
               separation
             </p>
             <p>
+              <strong className="text-blue-400">+ -</strong> Increase/decrease
+              size
+            </p>
+            <p>
+              <strong className="text-red-400">R</strong> Cycle red intensity
+            </p>
+            <p>
+              <strong className="text-green-400">G</strong> Cycle green
+              intensity
+            </p>
+            <p>
               <strong className="text-yellow-400">ESC</strong> Toggle
               instructions
             </p>
@@ -281,13 +346,18 @@ export default function NeonRingsExercise() {
             <p>
               H: {horizontalSeparation}px | V: {verticalSeparation}px
             </p>
+            <p>
+              Size: {settings.objectSize.toFixed(1)}x | Red:{" "}
+              {Math.round(settings.redIntensity * 100)}% | Green:{" "}
+              {Math.round(settings.greenIntensity * 100)}%
+            </p>
           </div>
         </div>
       )}
 
       <Link
         href="/"
-        className="absolute top-4 right-4 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-cyan-700 hover:via-blue-700 hover:to-purple-700 transition-all shadow-lg"
+        className="absolute top-4 right-4 bg-gradient-to-r from-cyan-600 to-purple-600 text-white px-4 py-2 rounded-xl hover:from-cyan-700 hover:to-purple-700 transition-all shadow-lg"
       >
         Home
       </Link>

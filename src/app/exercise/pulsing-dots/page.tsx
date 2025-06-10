@@ -6,6 +6,10 @@ import {
   getSettings,
   getPureRedColor,
   getPureGreenColor,
+  increaseSize,
+  decreaseSize,
+  cycleRedIntensity,
+  cycleGreenIntensity,
 } from "../../lib/settings";
 
 export default function PulsingDotsExercise() {
@@ -53,6 +57,26 @@ export default function PulsingDotsExercise() {
         break;
       case "Escape":
         setShowInstructions((prev) => !prev);
+        break;
+      case "+":
+      case "=":
+        event.preventDefault();
+        setSettings(increaseSize());
+        break;
+      case "-":
+      case "_":
+        event.preventDefault();
+        setSettings(decreaseSize());
+        break;
+      case "r":
+      case "R":
+        event.preventDefault();
+        setSettings(cycleRedIntensity());
+        break;
+      case "g":
+      case "G":
+        event.preventDefault();
+        setSettings(cycleGreenIntensity());
         break;
     }
     event.preventDefault();
@@ -229,6 +253,17 @@ export default function PulsingDotsExercise() {
             <p>
               <strong className="text-green-400">↑ ↓</strong> Vertical
               separation
+            </p>
+            <p>
+              <strong className="text-blue-400">+ -</strong> Increase/decrease
+              size
+            </p>
+            <p>
+              <strong className="text-red-400">R</strong> Cycle red intensity
+            </p>
+            <p>
+              <strong className="text-green-400">G</strong> Cycle green
+              intensity
             </p>
             <p>
               <strong className="text-yellow-400">ESC</strong> Toggle

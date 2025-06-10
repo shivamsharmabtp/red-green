@@ -12,6 +12,16 @@ export const DEFAULT_SETTINGS: ExerciseSettings = {
 
 const SETTINGS_KEY = "red-green-exercise-settings";
 
+// Size constraints
+export const MIN_SIZE = 0.5;
+export const MAX_SIZE = 2.0;
+export const SIZE_STEP = 0.1;
+
+// Intensity constraints
+export const MIN_INTENSITY = 0.3;
+export const MAX_INTENSITY = 1.0;
+export const INTENSITY_STEP = 0.1;
+
 export function getSettings(): ExerciseSettings {
   if (typeof window === "undefined") {
     return DEFAULT_SETTINGS;
@@ -50,6 +60,55 @@ export function saveSettings(settings: ExerciseSettings): void {
   } catch (error) {
     console.error("Error saving settings:", error);
   }
+}
+
+// Update individual setting and save
+export function updateSetting<K extends keyof ExerciseSettings>(
+  key: K,
+  value: ExerciseSettings[K]
+): ExerciseSettings {
+  const currentSettings = getSettings();
+  const newSettings = { ...currentSettings, [key]: value };
+  saveSettings(newSettings);
+  return newSettings;
+}
+
+// Increase object size
+export function increaseSize(): ExerciseSettings {
+  const current = getSettings();
+  const newSize = Math.min(current.objectSize + SIZE_STEP, MAX_SIZE);
+  return updateSetting("objectSize", parseFloat(newSize.toFixed(1)));
+}
+
+// Decrease object size
+export function decreaseSize(): ExerciseSettings {
+  const current = getSettings();
+  const newSize = Math.max(current.objectSize - SIZE_STEP, MIN_SIZE);
+  return updateSetting("objectSize", parseFloat(newSize.toFixed(1)));
+}
+
+// Cycle red intensity (min -> max -> min)
+export function cycleRedIntensity(): ExerciseSettings {
+  const current = getSettings();
+  let newIntensity = current.redIntensity + INTENSITY_STEP;
+
+  if (newIntensity > MAX_INTENSITY) {
+    newIntensity = MIN_INTENSITY;
+  }
+
+  return updateSetting("redIntensity", parseFloat(newIntensity.toFixed(1)));
+}
+
+// Cycle green intensity (min -> max -> min)
+export function cycleGreenIntensity(): ExerciseSettings {
+  const current = getSettings();
+  let newIntensity = current.greenIntensity + INTENSITY_STEP;
+
+  if (newIntensity > MAX_INTENSITY) {
+    newIntensity = MIN_INTENSITY;
+  }
+
+  return updateSetting("greenIntensity", parseFloat(newIntensity.toFixed(1)));
 }
 
 // Helper functions to get pure red/green colors with transparency

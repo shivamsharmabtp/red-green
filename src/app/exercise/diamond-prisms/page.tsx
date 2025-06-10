@@ -2,11 +2,32 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import {
+  getSettings,
+  getPureRedColor,
+  getPureGreenColor,
+  increaseSize,
+  decreaseSize,
+  cycleRedIntensity,
+  cycleGreenIntensity,
+} from "../../lib/settings";
 
 export default function DiamondPrismsExercise() {
   const [horizontalSeparation, setHorizontalSeparation] = useState(0);
   const [verticalSeparation, setVerticalSeparation] = useState(0);
   const [showInstructions, setShowInstructions] = useState(true);
+
+  // Settings
+  const [settings, setSettings] = useState({
+    objectSize: 1.0,
+    redIntensity: 0.8,
+    greenIntensity: 0.8,
+  });
+
+  // Load settings on component mount
+  useEffect(() => {
+    setSettings(getSettings());
+  }, []);
 
   const MAX_HORIZONTAL_SEPARATION = 500;
   const MAX_VERTICAL_SEPARATION = 500;
@@ -37,6 +58,26 @@ export default function DiamondPrismsExercise() {
       case "Escape":
         setShowInstructions((prev) => !prev);
         break;
+      case "+":
+      case "=":
+        event.preventDefault();
+        setSettings(increaseSize());
+        break;
+      case "-":
+      case "_":
+        event.preventDefault();
+        setSettings(decreaseSize());
+        break;
+      case "r":
+      case "R":
+        event.preventDefault();
+        setSettings(cycleRedIntensity());
+        break;
+      case "g":
+      case "G":
+        event.preventDefault();
+        setSettings(cycleGreenIntensity());
+        break;
     }
     event.preventDefault();
   }, []);
@@ -56,67 +97,82 @@ export default function DiamondPrismsExercise() {
     offsetX: number;
     offsetY: number;
     rotation: string;
-  }) => (
-    <div
-      className="absolute"
-      style={{
-        left: "50%",
-        top: "50%",
-        transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
-      }}
-    >
+  }) => {
+    const size = 128 * settings.objectSize; // 128px base size
+    return (
       <div
-        className="relative w-32 h-32"
-        style={{ animation: `${rotation} 6s linear infinite` }}
+        className="absolute"
+        style={{
+          left: "50%",
+          top: "50%",
+          transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
+        }}
       >
-        {/* Diamond shape using clip-path */}
         <div
-          className="absolute w-32 h-32"
+          className="relative"
           style={{
-            background: `conic-gradient(from 0deg, ${baseColor}ff, #FFD700, ${baseColor}cc, #FF69B4, ${baseColor}ff)`,
-            clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
-            boxShadow: `
-              0 0 40px ${baseColor}80,
-              inset 0 0 20px rgba(255, 255, 255, 0.3),
-              0 0 80px ${baseColor}40
-            `,
-            filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.5))",
+            width: `${size}px`,
+            height: `${size}px`,
+            animation: `${rotation} 6s linear infinite`,
           }}
-        />
-
-        {/* Inner prismatic facets */}
-        {[...Array(8)].map((_, i) => (
+        >
+          {/* Diamond shape using clip-path */}
           <div
-            key={i}
-            className="absolute w-16 h-16 top-8 left-8"
+            className="absolute"
             style={{
-              background: `linear-gradient(${
-                i * 45
-              }deg, transparent, rgba(255, 255, 255, 0.4), transparent)`,
+              width: `${size}px`,
+              height: `${size}px`,
+              background: `conic-gradient(from 0deg, ${baseColor}ff, #FFD700, ${baseColor}cc, #FF69B4, ${baseColor}ff)`,
               clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
-              transform: `rotate(${i * 22.5}deg) scale(${0.3 + i * 0.08})`,
-              animation: `shimmer 3s ease-in-out infinite ${i * 0.2}s`,
+              boxShadow: `
+                0 0 40px ${baseColor}80,
+                inset 0 0 20px rgba(255, 255, 255, 0.3),
+                0 0 80px ${baseColor}40
+              `,
+              filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.5))",
             }}
           />
-        ))}
 
-        {/* Outer light rays */}
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={`ray-${i}`}
-            className="absolute w-1 h-20 bg-gradient-to-t from-transparent via-white to-transparent opacity-60"
-            style={{
-              left: "50%",
-              top: "-10px",
-              transformOrigin: "bottom center",
-              transform: `translateX(-50%) rotate(${i * 30}deg)`,
-              animation: `rays 4s linear infinite ${i * 0.1}s`,
-            }}
-          />
-        ))}
+          {/* Inner prismatic facets */}
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute"
+              style={{
+                width: `${size / 2}px`,
+                height: `${size / 2}px`,
+                top: `${size / 4}px`,
+                left: `${size / 4}px`,
+                background: `linear-gradient(${
+                  i * 45
+                }deg, transparent, rgba(255, 255, 255, 0.4), transparent)`,
+                clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+                transform: `rotate(${i * 22.5}deg) scale(${0.3 + i * 0.08})`,
+                animation: `shimmer 3s ease-in-out infinite ${i * 0.2}s`,
+              }}
+            />
+          ))}
+
+          {/* Outer light rays */}
+          {[...Array(12)].map((_, i) => (
+            <div
+              key={`ray-${i}`}
+              className="absolute bg-gradient-to-t from-transparent via-white to-transparent opacity-60"
+              style={{
+                width: "4px",
+                height: `${size * 0.625}px`, // 80px equivalent
+                left: "50%",
+                top: `${-size * 0.078}px`, // -10px equivalent
+                transformOrigin: "bottom center",
+                transform: `translateX(-50%) rotate(${i * 30}deg)`,
+                animation: `rays 4s linear infinite ${i * 0.1}s`,
+              }}
+            />
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="relative w-screen h-screen bg-black overflow-hidden">
@@ -163,7 +219,10 @@ export default function DiamondPrismsExercise() {
 
       {/* Red Diamond Prism */}
       <DiamondPrism
-        baseColor="#FF0066"
+        baseColor={getPureRedColor(settings.redIntensity).replace(
+          "rgba(255, 0, 0, ",
+          "rgba(255, 0, 102, "
+        )}
         offsetX={-horizontalSeparation / 2}
         offsetY={-verticalSeparation / 2}
         rotation="rotateClockwise"
@@ -171,7 +230,10 @@ export default function DiamondPrismsExercise() {
 
       {/* Green Diamond Prism */}
       <DiamondPrism
-        baseColor="#00FF66"
+        baseColor={getPureGreenColor(settings.greenIntensity).replace(
+          "rgba(0, 255, 0, ",
+          "rgba(0, 255, 102, "
+        )}
         offsetX={horizontalSeparation / 2}
         offsetY={verticalSeparation / 2}
         rotation="rotateCounterClockwise"
@@ -181,8 +243,14 @@ export default function DiamondPrismsExercise() {
       <div className="absolute inset-0 pointer-events-none">
         {[...Array(15)].map((_, i) => {
           const colors = [
-            "#FF0066",
-            "#00FF66",
+            getPureRedColor(settings.redIntensity).replace(
+              "rgba(255, 0, 0, ",
+              "rgba(255, 0, 102, "
+            ),
+            getPureGreenColor(settings.greenIntensity).replace(
+              "rgba(0, 255, 0, ",
+              "rgba(0, 255, 102, "
+            ),
             "#6600FF",
             "#FF6600",
             "#0066FF",
@@ -234,6 +302,17 @@ export default function DiamondPrismsExercise() {
               separation
             </p>
             <p>
+              <strong className="text-blue-400">+ -</strong> Increase/decrease
+              size
+            </p>
+            <p>
+              <strong className="text-red-400">R</strong> Cycle red intensity
+            </p>
+            <p>
+              <strong className="text-green-400">G</strong> Cycle green
+              intensity
+            </p>
+            <p>
               <strong className="text-yellow-400">ESC</strong> Toggle
               instructions
             </p>
@@ -241,6 +320,11 @@ export default function DiamondPrismsExercise() {
           <div className="mt-3 text-xs text-gray-300">
             <p>
               H: {horizontalSeparation}px | V: {verticalSeparation}px
+            </p>
+            <p>
+              Size: {settings.objectSize.toFixed(1)}x | Red:{" "}
+              {Math.round(settings.redIntensity * 100)}% | Green:{" "}
+              {Math.round(settings.greenIntensity * 100)}%
             </p>
           </div>
         </div>

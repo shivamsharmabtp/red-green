@@ -2,11 +2,32 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import {
+  getSettings,
+  getPureRedColor,
+  getPureGreenColor,
+  increaseSize,
+  decreaseSize,
+  cycleRedIntensity,
+  cycleGreenIntensity,
+} from "../../lib/settings";
 
 export default function RainbowCubesExercise() {
   const [horizontalSeparation, setHorizontalSeparation] = useState(0);
   const [verticalSeparation, setVerticalSeparation] = useState(0);
   const [showInstructions, setShowInstructions] = useState(true);
+
+  // Settings
+  const [settings, setSettings] = useState({
+    objectSize: 1.0,
+    redIntensity: 0.8,
+    greenIntensity: 0.8,
+  });
+
+  // Load settings on component mount
+  useEffect(() => {
+    setSettings(getSettings());
+  }, []);
 
   const MAX_HORIZONTAL_SEPARATION = 500;
   const MAX_VERTICAL_SEPARATION = 500;
@@ -37,6 +58,26 @@ export default function RainbowCubesExercise() {
       case "Escape":
         setShowInstructions((prev) => !prev);
         break;
+      case "+":
+      case "=":
+        event.preventDefault();
+        setSettings(increaseSize());
+        break;
+      case "-":
+      case "_":
+        event.preventDefault();
+        setSettings(decreaseSize());
+        break;
+      case "r":
+      case "R":
+        event.preventDefault();
+        setSettings(cycleRedIntensity());
+        break;
+      case "g":
+      case "G":
+        event.preventDefault();
+        setSettings(cycleGreenIntensity());
+        break;
     }
     event.preventDefault();
   }, []);
@@ -47,93 +88,105 @@ export default function RainbowCubesExercise() {
   }, [handleKeyPress]);
 
   const RainbowCube = ({
-    colors,
+    baseColor,
     offsetX,
     offsetY,
     rotation,
   }: {
-    colors: string[];
+    baseColor: string;
     offsetX: number;
     offsetY: number;
     rotation: string;
-  }) => (
-    <div
-      className="absolute preserve-3d"
-      style={{
-        left: "50%",
-        top: "50%",
-        transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px)) perspective(400px)`,
-      }}
-    >
+  }) => {
+    const size = 100 * settings.objectSize; // 100px base size
+    return (
       <div
-        className="relative w-28 h-28 preserve-3d"
+        className="absolute"
         style={{
-          transformStyle: "preserve-3d",
-          animation: `${rotation} 8s linear infinite`,
+          left: "50%",
+          top: "50%",
+          transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
         }}
       >
-        {/* Front face */}
         <div
-          className="absolute w-28 h-28 border-2 border-white border-opacity-30"
+          className="relative preserve-3d"
           style={{
-            background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
-            transform: "translateZ(56px)",
-            boxShadow: `0 0 30px ${colors[0]}80, inset 0 0 20px ${colors[1]}40`,
+            width: `${size}px`,
+            height: `${size}px`,
+            transformStyle: "preserve-3d",
+            animation: `${rotation} 6s linear infinite`,
           }}
-        />
+        >
+          {/* Front face */}
+          <div
+            className="absolute"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              background: `linear-gradient(45deg, ${baseColor}, #FFD700, ${baseColor})`,
+              transform: `translateZ(${size / 2}px)`,
+              boxShadow: `0 0 30px ${baseColor}80`,
+            }}
+          />
 
-        {/* Back face */}
-        <div
-          className="absolute w-28 h-28 border-2 border-white border-opacity-30"
-          style={{
-            background: `linear-gradient(135deg, ${colors[1]}, ${colors[2]})`,
-            transform: "translateZ(-56px) rotateY(180deg)",
-            boxShadow: `0 0 30px ${colors[1]}80, inset 0 0 20px ${colors[2]}40`,
-          }}
-        />
+          {/* Back face */}
+          <div
+            className="absolute"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              background: `linear-gradient(-45deg, ${baseColor}, #FF69B4, ${baseColor})`,
+              transform: `rotateY(180deg) translateZ(${size / 2}px)`,
+            }}
+          />
 
-        {/* Right face */}
-        <div
-          className="absolute w-28 h-28 border-2 border-white border-opacity-30"
-          style={{
-            background: `linear-gradient(135deg, ${colors[2]}, ${colors[3]})`,
-            transform: "rotateY(90deg) translateZ(56px)",
-            boxShadow: `0 0 30px ${colors[2]}80, inset 0 0 20px ${colors[3]}40`,
-          }}
-        />
+          {/* Right face */}
+          <div
+            className="absolute"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              background: `linear-gradient(90deg, ${baseColor}, #00BFFF, ${baseColor})`,
+              transform: `rotateY(90deg) translateZ(${size / 2}px)`,
+            }}
+          />
 
-        {/* Left face */}
-        <div
-          className="absolute w-28 h-28 border-2 border-white border-opacity-30"
-          style={{
-            background: `linear-gradient(135deg, ${colors[3]}, ${colors[4]})`,
-            transform: "rotateY(-90deg) translateZ(56px)",
-            boxShadow: `0 0 30px ${colors[3]}80, inset 0 0 20px ${colors[4]}40`,
-          }}
-        />
+          {/* Left face */}
+          <div
+            className="absolute"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              background: `linear-gradient(-90deg, ${baseColor}, #32CD32, ${baseColor})`,
+              transform: `rotateY(-90deg) translateZ(${size / 2}px)`,
+            }}
+          />
 
-        {/* Top face */}
-        <div
-          className="absolute w-28 h-28 border-2 border-white border-opacity-30"
-          style={{
-            background: `linear-gradient(135deg, ${colors[4]}, ${colors[5]})`,
-            transform: "rotateX(90deg) translateZ(56px)",
-            boxShadow: `0 0 30px ${colors[4]}80, inset 0 0 20px ${colors[5]}40`,
-          }}
-        />
+          {/* Top face */}
+          <div
+            className="absolute"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              background: `linear-gradient(0deg, ${baseColor}, #9370DB, ${baseColor})`,
+              transform: `rotateX(90deg) translateZ(${size / 2}px)`,
+            }}
+          />
 
-        {/* Bottom face */}
-        <div
-          className="absolute w-28 h-28 border-2 border-white border-opacity-30"
-          style={{
-            background: `linear-gradient(135deg, ${colors[5]}, ${colors[0]})`,
-            transform: "rotateX(-90deg) translateZ(56px)",
-            boxShadow: `0 0 30px ${colors[5]}80, inset 0 0 20px ${colors[0]}40`,
-          }}
-        />
+          {/* Bottom face */}
+          <div
+            className="absolute"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              background: `linear-gradient(180deg, ${baseColor}, #FF4500, ${baseColor})`,
+              transform: `rotateX(-90deg) translateZ(${size / 2}px)`,
+            }}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="relative w-screen h-screen bg-black overflow-hidden">
@@ -141,96 +194,73 @@ export default function RainbowCubesExercise() {
         .preserve-3d {
           transform-style: preserve-3d;
         }
-        @keyframes rotateRed {
-          0% {
-            transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        @keyframes rotateX {
+          from {
+            transform: rotateX(0deg) rotateY(0deg);
           }
-          100% {
-            transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg);
+          to {
+            transform: rotateX(360deg) rotateY(360deg);
           }
         }
-        @keyframes rotateGreen {
-          0% {
-            transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        @keyframes rotateY {
+          from {
+            transform: rotateY(0deg) rotateX(0deg);
           }
+          to {
+            transform: rotateY(360deg) rotateX(360deg);
+          }
+        }
+        @keyframes shimmer {
+          0%,
           100% {
-            transform: rotateX(180deg) rotateY(360deg) rotateZ(270deg);
+            opacity: 0.8;
+            filter: brightness(1) hue-rotate(0deg);
+          }
+          50% {
+            opacity: 1;
+            filter: brightness(1.3) hue-rotate(180deg);
           }
         }
       `}</style>
 
       {/* Red Rainbow Cube */}
       <RainbowCube
-        colors={[
-          "#FF0080",
-          "#FF4000",
-          "#FF8000",
-          "#FFB000",
-          "#FF0040",
-          "#FF6060",
-        ]}
+        baseColor={getPureRedColor(settings.redIntensity)}
         offsetX={-horizontalSeparation / 2}
         offsetY={-verticalSeparation / 2}
-        rotation="rotateRed"
+        rotation="rotateX"
       />
 
       {/* Green Rainbow Cube */}
       <RainbowCube
-        colors={[
-          "#00FF80",
-          "#40FF00",
-          "#80FF00",
-          "#B0FF00",
-          "#00FF40",
-          "#60FF60",
-        ]}
+        baseColor={getPureGreenColor(settings.greenIntensity)}
         offsetX={horizontalSeparation / 2}
         offsetY={verticalSeparation / 2}
-        rotation="rotateGreen"
+        rotation="rotateY"
       />
 
-      {/* Colorful particle effects */}
+      {/* Floating geometric shapes background */}
       <div className="absolute inset-0 pointer-events-none">
-        {[...Array(30)].map((_, i) => {
-          const colors = [
-            "#FF0080",
-            "#00FF80",
-            "#8000FF",
-            "#FF8000",
-            "#00FFFF",
-          ];
-          const color = colors[i % colors.length];
-          return (
-            <div
-              key={i}
-              className="absolute w-3 h-3 rounded-full"
-              style={{
-                background: `radial-gradient(circle, ${color}, transparent)`,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                boxShadow: `0 0 10px ${color}`,
-                animation: `float ${
-                  3 + Math.random() * 4
-                }s ease-in-out infinite ${Math.random() * 2}s`,
-              }}
-            />
-          );
-        })}
+        {[...Array(12)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute opacity-20"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: `${20 + Math.random() * 40}px`,
+              height: `${20 + Math.random() * 40}px`,
+              background: `linear-gradient(${Math.random() * 360}deg, 
+                ${i % 2 === 0 ? getPureRedColor(0.3) : getPureGreenColor(0.3)}, 
+                transparent)`,
+              animation: `shimmer ${
+                3 + Math.random() * 4
+              }s ease-in-out infinite ${Math.random() * 2}s`,
+              transform: `rotate(${Math.random() * 360}deg)`,
+            }}
+          />
+        ))}
       </div>
-
-      <style jsx>{`
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0px) scale(0.8);
-            opacity: 0.6;
-          }
-          50% {
-            transform: translateY(-20px) scale(1.2);
-            opacity: 1;
-          }
-        }
-      `}</style>
 
       {showInstructions && (
         <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-95 text-white p-4 rounded-xl max-w-sm backdrop-blur-sm border-2 border-pink-500 shadow-lg shadow-pink-500/20">
@@ -247,6 +277,17 @@ export default function RainbowCubesExercise() {
               separation
             </p>
             <p>
+              <strong className="text-blue-400">+ -</strong> Increase/decrease
+              size
+            </p>
+            <p>
+              <strong className="text-red-400">R</strong> Cycle red intensity
+            </p>
+            <p>
+              <strong className="text-green-400">G</strong> Cycle green
+              intensity
+            </p>
+            <p>
               <strong className="text-yellow-400">ESC</strong> Toggle
               instructions
             </p>
@@ -254,6 +295,11 @@ export default function RainbowCubesExercise() {
           <div className="mt-3 text-xs text-gray-300">
             <p>
               H: {horizontalSeparation}px | V: {verticalSeparation}px
+            </p>
+            <p>
+              Size: {settings.objectSize.toFixed(1)}x | Red:{" "}
+              {Math.round(settings.redIntensity * 100)}% | Green:{" "}
+              {Math.round(settings.greenIntensity * 100)}%
             </p>
           </div>
         </div>
