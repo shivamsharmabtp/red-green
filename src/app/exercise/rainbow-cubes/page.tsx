@@ -8,8 +8,8 @@ export default function RainbowCubesExercise() {
   const [verticalSeparation, setVerticalSeparation] = useState(0);
   const [showInstructions, setShowInstructions] = useState(true);
 
-  const MAX_HORIZONTAL_SEPARATION = 280;
-  const MAX_VERTICAL_SEPARATION = 200;
+  const MAX_HORIZONTAL_SEPARATION = 500;
+  const MAX_VERTICAL_SEPARATION = 500;
   const STEP_SIZE = 7;
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {

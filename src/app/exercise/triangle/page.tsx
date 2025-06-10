@@ -27,8 +27,8 @@ export default function TriangleExercise() {
   }, []);
 
   // Limits for separation
-  const MAX_HORIZONTAL_SEPARATION = 200;
-  const MAX_VERTICAL_SEPARATION = 150;
+  const MAX_HORIZONTAL_SEPARATION = 500;
+  const MAX_VERTICAL_SEPARATION = 500;
   const STEP_SIZE = 5;
 
   // Handle keyboard controls

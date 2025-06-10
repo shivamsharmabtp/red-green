@@ -8,8 +8,8 @@ export default function NeonRingsExercise() {
   const [verticalSeparation, setVerticalSeparation] = useState(0);
   const [showInstructions, setShowInstructions] = useState(true);
 
-  const MAX_HORIZONTAL_SEPARATION = 300;
-  const MAX_VERTICAL_SEPARATION = 220;
+  const MAX_HORIZONTAL_SEPARATION = 500;
+  const MAX_VERTICAL_SEPARATION = 500;
   const STEP_SIZE = 8;
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
