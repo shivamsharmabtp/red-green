@@ -179,7 +179,7 @@ export default function Home() {
                 <ul className="text-gray-700 space-y-1">
                   <li>• Start with beginner exercises</li>
                   <li>• Practice in a dark room for best results</li>
-                  <li>• Follow your eye care professional's guidance</li>
+                  <li>• Follow your eye care professional&apos;s guidance</li>
                   <li>• Adjust settings using the ⚙️ button above</li>
                 </ul>
               </div>
