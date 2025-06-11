@@ -79,7 +79,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <input
                 type="range"
                 min="0.5"
-                max="2.0"
+                max="10.0"
                 step="0.01"
                 value={settings.objectSize}
                 onChange={(e) =>
@@ -93,7 +93,8 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <div className="flex justify-between text-sm text-gray-500 mt-2">
                 <span>0.5x (Small)</span>
                 <span>1.0x (Normal)</span>
-                <span>2.0x (Large)</span>
+                <span>5.0x (Large)</span>
+                <span>10.0x (Huge)</span>
               </div>
             </div>
 

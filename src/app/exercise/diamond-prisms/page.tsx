@@ -1,104 +1,31 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import {
-  getSettings,
-  getPureRedColor,
-  getPureGreenColor,
-  increaseSize,
-  decreaseSize,
-  cycleRedIntensity,
-  cycleGreenIntensity,
-} from "../../lib/settings";
+import { getPureRedColor, getPureGreenColor } from "../../lib/settings";
+import { useExerciseControls } from "../../hooks/useExerciseControls";
+import ExerciseLayout from "../../components/ExerciseLayout";
 
 export default function DiamondPrismsExercise() {
-  const [horizontalSeparation, setHorizontalSeparation] = useState(0);
-  const [verticalSeparation, setVerticalSeparation] = useState(0);
-  const [showInstructions, setShowInstructions] = useState(true);
-
-  // Settings
-  const [settings, setSettings] = useState({
-    objectSize: 1.0,
-    redIntensity: 0.8,
-    greenIntensity: 0.8,
-  });
-
-  // Load settings on component mount
-  useEffect(() => {
-    setSettings(getSettings());
-  }, []);
-
-  const MAX_HORIZONTAL_SEPARATION = 500;
-  const MAX_VERTICAL_SEPARATION = 500;
-  const STEP_SIZE = 5;
-
-  const handleKeyPress = useCallback((event: KeyboardEvent) => {
-    switch (event.key) {
-      case "ArrowLeft":
-        setHorizontalSeparation((prev) =>
-          Math.max(prev - STEP_SIZE, -MAX_HORIZONTAL_SEPARATION)
-        );
-        break;
-      case "ArrowRight":
-        setHorizontalSeparation((prev) =>
-          Math.min(prev + STEP_SIZE, MAX_HORIZONTAL_SEPARATION)
-        );
-        break;
-      case "ArrowUp":
-        setVerticalSeparation((prev) =>
-          Math.max(prev - STEP_SIZE, -MAX_VERTICAL_SEPARATION)
-        );
-        break;
-      case "ArrowDown":
-        setVerticalSeparation((prev) =>
-          Math.min(prev + STEP_SIZE, MAX_VERTICAL_SEPARATION)
-        );
-        break;
-      case "Escape":
-        setShowInstructions((prev) => !prev);
-        break;
-      case "+":
-      case "=":
-        event.preventDefault();
-        setSettings(increaseSize());
-        break;
-      case "-":
-      case "_":
-        event.preventDefault();
-        setSettings(decreaseSize());
-        break;
-      case "r":
-      case "R":
-        event.preventDefault();
-        setSettings(cycleRedIntensity());
-        break;
-      case "g":
-      case "G":
-        event.preventDefault();
-        setSettings(cycleGreenIntensity());
-        break;
-    }
-    event.preventDefault();
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleKeyPress]);
+  const {
+    horizontalSeparation,
+    verticalSeparation,
+    showInstructions,
+    isFullscreen,
+    settings,
+  } = useExerciseControls({ stepSize: 3 });
 
   const DiamondPrism = ({
-    baseColor,
+    color,
     offsetX,
     offsetY,
-    rotation,
+    rotationDelay,
   }: {
-    baseColor: string;
+    color: string;
     offsetX: number;
     offsetY: number;
-    rotation: string;
+    rotationDelay: number;
   }) => {
-    const size = 128 * settings.objectSize; // 128px base size
+    const size = 160 * settings.objectSize;
+
     return (
       <div
         className="absolute"
@@ -108,234 +35,230 @@ export default function DiamondPrismsExercise() {
           transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
         }}
       >
+        {/* Outer rotating ring */}
+        <div
+          className="absolute inset-0 rounded-full border-4 opacity-30"
+          style={{
+            width: `${size * 1.5}px`,
+            height: `${size * 1.5}px`,
+            borderColor: color,
+            animation: `spin 10s linear infinite ${rotationDelay}s`,
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+
+        {/* Main diamond prism */}
         <div
           className="relative"
           style={{
             width: `${size}px`,
             height: `${size}px`,
-            animation: `${rotation} 6s linear infinite`,
+            animation: `float 4s ease-in-out infinite ${rotationDelay}s`,
           }}
         >
-          {/* Diamond shape using clip-path */}
+          {/* Diamond faces creating 3D effect */}
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(${
+                  45 + i * 60
+                }deg, ${color}ff, ${color}80, ${color}20)`,
+                clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+                transform: `rotate(${i * 60}deg) scale(${1 - i * 0.1})`,
+                opacity: 0.8 - i * 0.1,
+                animation: `prismRotate 8s linear infinite ${
+                  rotationDelay + i * 0.2
+                }s`,
+              }}
+            />
+          ))}
+
+          {/* Central crystalline core */}
           <div
-            className="absolute"
+            className="absolute inset-0"
             style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              background: `conic-gradient(from 0deg, ${baseColor}ff, #FFD700, ${baseColor}cc, #FF69B4, ${baseColor}ff)`,
+              background: `radial-gradient(circle, ${color}ff, ${color}40, transparent)`,
               clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
-              boxShadow: `
-                0 0 40px ${baseColor}80,
-                inset 0 0 20px rgba(255, 255, 255, 0.3),
-                0 0 80px ${baseColor}40
-              `,
-              filter: "drop-shadow(0 0 15px rgba(255, 255, 255, 0.5))",
+              animation: `pulse 3s ease-in-out infinite ${rotationDelay}s`,
             }}
           />
 
-          {/* Inner prismatic facets */}
-          {[...Array(8)].map((_, i) => (
+          {/* Light reflections */}
+          {[...Array(3)].map((_, i) => (
             <div
-              key={i}
+              key={`light-${i}`}
               className="absolute"
               style={{
-                width: `${size / 2}px`,
-                height: `${size / 2}px`,
-                top: `${size / 4}px`,
-                left: `${size / 4}px`,
-                background: `linear-gradient(${
-                  i * 45
-                }deg, transparent, rgba(255, 255, 255, 0.4), transparent)`,
-                clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
-                transform: `rotate(${i * 22.5}deg) scale(${0.3 + i * 0.08})`,
-                animation: `shimmer 3s ease-in-out infinite ${i * 0.2}s`,
+                width: "2px",
+                height: `${size * 0.8}px`,
+                background: `linear-gradient(to bottom, ${color}ff, transparent)`,
+                left: "50%",
+                top: "10%",
+                transform: `translateX(-50%) rotate(${i * 120}deg)`,
+                opacity: 0.6,
+                animation: `shimmer 2s ease-in-out infinite ${
+                  rotationDelay + i * 0.5
+                }s`,
               }}
             />
           ))}
 
-          {/* Outer light rays */}
-          {[...Array(12)].map((_, i) => (
-            <div
-              key={`ray-${i}`}
-              className="absolute bg-gradient-to-t from-transparent via-white to-transparent opacity-60"
-              style={{
-                width: "4px",
-                height: `${size * 0.625}px`, // 80px equivalent
-                left: "50%",
-                top: `${-size * 0.078}px`, // -10px equivalent
-                transformOrigin: "bottom center",
-                transform: `translateX(-50%) rotate(${i * 30}deg)`,
-                animation: `rays 4s linear infinite ${i * 0.1}s`,
-              }}
-            />
-          ))}
+          {/* Prism edges for 3D effect */}
+          <div
+            className="absolute inset-0 border-2 opacity-40"
+            style={{
+              borderColor: color,
+              clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+              background: "transparent",
+            }}
+          />
         </div>
+
+        {/* Floating particles around the prism */}
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={`particle-${i}`}
+            className="absolute w-1 h-1 rounded-full"
+            style={{
+              background: color,
+              left: `${50 + Math.cos((i * Math.PI) / 4) * 100}%`,
+              top: `${50 + Math.sin((i * Math.PI) / 4) * 100}%`,
+              transform: "translate(-50%, -50%)",
+              animation: `orbit 6s linear infinite ${
+                rotationDelay + i * 0.25
+              }s`,
+            }}
+          />
+        ))}
       </div>
     );
   };
 
   return (
-    <div className="relative w-screen h-screen bg-black overflow-hidden">
+    <ExerciseLayout
+      showInstructions={showInstructions}
+      instructionsConfig={{
+        title: "Diamond Prisms",
+        titleColor: "text-purple-400",
+        borderColor: "border-purple-500",
+      }}
+      homeButtonConfig={{
+        gradientFrom: "purple-600",
+        gradientTo: "pink-600",
+        gradientVia: "indigo-600",
+      }}
+      horizontalSeparation={horizontalSeparation}
+      verticalSeparation={verticalSeparation}
+      settings={settings}
+      isFullscreen={isFullscreen}
+    >
       <style jsx>{`
-        @keyframes rotateClockwise {
+        @keyframes spin {
           from {
-            transform: rotate(0deg);
+            transform: translate(-50%, -50%) rotate(0deg);
           }
           to {
-            transform: rotate(360deg);
+            transform: translate(-50%, -50%) rotate(360deg);
           }
         }
-        @keyframes rotateCounterClockwise {
+        @keyframes float {
+          0%,
+          100% {
+            transform: translateY(0px) scale(1);
+          }
+          50% {
+            transform: translateY(-20px) scale(1.05);
+          }
+        }
+        @keyframes prismRotate {
           from {
-            transform: rotate(0deg);
+            transform: rotate(0deg) scale(var(--scale));
           }
           to {
-            transform: rotate(-360deg);
+            transform: rotate(360deg) scale(var(--scale));
+          }
+        }
+        @keyframes pulse {
+          0%,
+          100% {
+            opacity: 0.8;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.1);
           }
         }
         @keyframes shimmer {
           0%,
           100% {
             opacity: 0.3;
-            transform: rotate(var(--rotate)) scale(var(--scale));
           }
           50% {
             opacity: 0.8;
-            transform: rotate(var(--rotate)) scale(calc(var(--scale) * 1.2));
           }
         }
-        @keyframes rays {
-          0%,
-          100% {
-            opacity: 0.2;
-            transform: translateX(-50%) rotate(var(--rotate)) scaleY(1);
+        @keyframes orbit {
+          from {
+            transform: translate(-50%, -50%) rotate(0deg) translateX(80px)
+              rotate(0deg);
           }
-          50% {
-            opacity: 0.8;
-            transform: translateX(-50%) rotate(var(--rotate)) scaleY(1.5);
+          to {
+            transform: translate(-50%, -50%) rotate(360deg) translateX(80px)
+              rotate(-360deg);
           }
         }
       `}</style>
 
       {/* Red Diamond Prism */}
       <DiamondPrism
-        baseColor={getPureRedColor(settings.redIntensity).replace(
-          "rgba(255, 0, 0, ",
-          "rgba(255, 0, 102, "
-        )}
+        color={getPureRedColor(settings.redIntensity)}
         offsetX={-horizontalSeparation / 2}
         offsetY={-verticalSeparation / 2}
-        rotation="rotateClockwise"
+        rotationDelay={0}
       />
 
       {/* Green Diamond Prism */}
       <DiamondPrism
-        baseColor={getPureGreenColor(settings.greenIntensity).replace(
-          "rgba(0, 255, 0, ",
-          "rgba(0, 255, 102, "
-        )}
+        color={getPureGreenColor(settings.greenIntensity)}
         offsetX={horizontalSeparation / 2}
         offsetY={verticalSeparation / 2}
-        rotation="rotateCounterClockwise"
+        rotationDelay={2}
       />
 
-      {/* Prismatic light effects */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(15)].map((_, i) => {
-          const colors = [
-            getPureRedColor(settings.redIntensity).replace(
-              "rgba(255, 0, 0, ",
-              "rgba(255, 0, 102, "
-            ),
-            getPureGreenColor(settings.greenIntensity).replace(
-              "rgba(0, 255, 0, ",
-              "rgba(0, 255, 102, "
-            ),
-            "#6600FF",
-            "#FF6600",
-            "#0066FF",
-          ];
-          const color = colors[i % colors.length];
-          return (
-            <div
-              key={i}
-              className="absolute w-2 h-8 opacity-70"
-              style={{
-                background: `linear-gradient(to bottom, ${color}, transparent)`,
-                left: `${10 + i * 6}%`,
-                top: `${Math.sin(i * 0.5) * 20 + 50}%`,
-                transform: `rotate(${i * 15}deg)`,
-                boxShadow: `0 0 15px ${color}`,
-                animation: `prismLight 5s ease-in-out infinite ${i * 0.3}s`,
-              }}
-            />
-          );
-        })}
+      {/* Mystical background pattern */}
+      <div className="absolute inset-0 opacity-10">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-0.5 h-0.5 bg-white rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animation: `twinkle ${2 + Math.random() * 3}s linear infinite ${
+                Math.random() * 2
+              }s`,
+            }}
+          />
+        ))}
       </div>
 
       <style jsx>{`
-        @keyframes prismLight {
+        @keyframes twinkle {
           0%,
+          80%,
           100% {
-            opacity: 0.3;
-            transform: rotate(var(--rotate)) translateY(0px);
+            opacity: 0.1;
           }
-          50% {
-            opacity: 0.9;
-            transform: rotate(var(--rotate)) translateY(-30px);
+          40% {
+            opacity: 0.6;
           }
         }
       `}</style>
-
-      {showInstructions && (
-        <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-95 text-white p-4 rounded-xl max-w-sm backdrop-blur-sm border-2 border-yellow-500 shadow-lg shadow-yellow-500/20">
-          <h3 className="text-lg font-bold mb-2 text-yellow-400">
-            Diamond Prisms
-          </h3>
-          <div className="text-sm space-y-1">
-            <p>
-              <strong className="text-red-400">← →</strong> Horizontal
-              separation
-            </p>
-            <p>
-              <strong className="text-green-400">↑ ↓</strong> Vertical
-              separation
-            </p>
-            <p>
-              <strong className="text-blue-400">+ -</strong> Increase/decrease
-              size
-            </p>
-            <p>
-              <strong className="text-red-400">R</strong> Cycle red intensity
-            </p>
-            <p>
-              <strong className="text-green-400">G</strong> Cycle green
-              intensity
-            </p>
-            <p>
-              <strong className="text-yellow-400">ESC</strong> Toggle
-              instructions
-            </p>
-          </div>
-          <div className="mt-3 text-xs text-gray-300">
-            <p>
-              H: {horizontalSeparation}px | V: {verticalSeparation}px
-            </p>
-            <p>
-              Size: {settings.objectSize.toFixed(1)}x | Red:{" "}
-              {Math.round(settings.redIntensity * 100)}% | Green:{" "}
-              {Math.round(settings.greenIntensity * 100)}%
-            </p>
-          </div>
-        </div>
-      )}
-
-      <Link
-        href="/"
-        className="absolute top-4 right-4 bg-gradient-to-r from-yellow-600 via-orange-600 to-red-600 text-white px-4 py-2 rounded-xl hover:from-yellow-700 hover:via-orange-700 hover:to-red-700 transition-all shadow-lg"
-      >
-        Home
-      </Link>
-    </div>
+    </ExerciseLayout>
   );
 }

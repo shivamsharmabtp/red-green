@@ -1,104 +1,62 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import {
-  getSettings,
-  getPureRedColor,
-  getPureGreenColor,
-  increaseSize,
-  decreaseSize,
-  cycleRedIntensity,
-  cycleGreenIntensity,
-} from "../../lib/settings";
+import { getPureRedColor, getPureGreenColor } from "../../lib/settings";
+import { useExerciseControls } from "../../hooks/useExerciseControls";
+import ExerciseLayout from "../../components/ExerciseLayout";
 
 export default function RainbowCubesExercise() {
-  const [horizontalSeparation, setHorizontalSeparation] = useState(0);
-  const [verticalSeparation, setVerticalSeparation] = useState(0);
-  const [showInstructions, setShowInstructions] = useState(true);
-
-  // Settings
-  const [settings, setSettings] = useState({
-    objectSize: 1.0,
-    redIntensity: 0.8,
-    greenIntensity: 0.8,
-  });
-
-  // Load settings on component mount
-  useEffect(() => {
-    setSettings(getSettings());
-  }, []);
-
-  const MAX_HORIZONTAL_SEPARATION = 500;
-  const MAX_VERTICAL_SEPARATION = 500;
-  const STEP_SIZE = 7;
-
-  const handleKeyPress = useCallback((event: KeyboardEvent) => {
-    switch (event.key) {
-      case "ArrowLeft":
-        setHorizontalSeparation((prev) =>
-          Math.max(prev - STEP_SIZE, -MAX_HORIZONTAL_SEPARATION)
-        );
-        break;
-      case "ArrowRight":
-        setHorizontalSeparation((prev) =>
-          Math.min(prev + STEP_SIZE, MAX_HORIZONTAL_SEPARATION)
-        );
-        break;
-      case "ArrowUp":
-        setVerticalSeparation((prev) =>
-          Math.max(prev - STEP_SIZE, -MAX_VERTICAL_SEPARATION)
-        );
-        break;
-      case "ArrowDown":
-        setVerticalSeparation((prev) =>
-          Math.min(prev + STEP_SIZE, MAX_VERTICAL_SEPARATION)
-        );
-        break;
-      case "Escape":
-        setShowInstructions((prev) => !prev);
-        break;
-      case "+":
-      case "=":
-        event.preventDefault();
-        setSettings(increaseSize());
-        break;
-      case "-":
-      case "_":
-        event.preventDefault();
-        setSettings(decreaseSize());
-        break;
-      case "r":
-      case "R":
-        event.preventDefault();
-        setSettings(cycleRedIntensity());
-        break;
-      case "g":
-      case "G":
-        event.preventDefault();
-        setSettings(cycleGreenIntensity());
-        break;
-    }
-    event.preventDefault();
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleKeyPress]);
+  const {
+    horizontalSeparation,
+    verticalSeparation,
+    showInstructions,
+    isFullscreen,
+    settings,
+  } = useExerciseControls({ stepSize: 4 });
 
   const RainbowCube = ({
-    baseColor,
+    primaryColor,
     offsetX,
     offsetY,
-    rotation,
+    rotationAxis,
   }: {
-    baseColor: string;
+    primaryColor: string;
     offsetX: number;
     offsetY: number;
-    rotation: string;
+    rotationAxis: string;
   }) => {
-    const size = 100 * settings.objectSize; // 100px base size
+    const size = 120 * settings.objectSize;
+
+    // Generate rainbow variations of the primary color
+    const getRainbowVariation = (baseColor: string, hueShift: number) => {
+      // Extract the alpha from the base color
+      const alpha = baseColor.match(/[\d.]+(?=\))/g)?.[3] || "1";
+
+      // Create rainbow variations by shifting hue
+      if (baseColor.includes("255, 0, 0")) {
+        // Red base - shift through spectrum
+        const variations = [
+          `rgba(255, ${Math.round(127 * hueShift)}, 0, ${alpha})`, // Red to Orange
+          `rgba(${Math.round(255 - 127 * hueShift)}, 255, 0, ${alpha})`, // Orange to Yellow
+          `rgba(0, 255, ${Math.round(127 * hueShift)}, ${alpha})`, // Yellow to Green
+          `rgba(0, ${Math.round(255 - 127 * hueShift)}, 255, ${alpha})`, // Green to Cyan
+          `rgba(${Math.round(127 * hueShift)}, 0, 255, ${alpha})`, // Cyan to Blue
+          `rgba(255, 0, ${Math.round(255 - 127 * hueShift)}, ${alpha})`, // Blue to Magenta
+        ];
+        return variations[Math.floor(hueShift * 5)];
+      } else {
+        // Green base - different rainbow pattern
+        const variations = [
+          `rgba(0, 255, ${Math.round(127 * hueShift)}, ${alpha})`, // Green to Cyan
+          `rgba(0, ${Math.round(255 - 127 * hueShift)}, 255, ${alpha})`, // Cyan to Blue
+          `rgba(${Math.round(127 * hueShift)}, 0, 255, ${alpha})`, // Blue to Magenta
+          `rgba(255, 0, ${Math.round(255 - 127 * hueShift)}, ${alpha})`, // Magenta to Red
+          `rgba(255, ${Math.round(127 * hueShift)}, 0, ${alpha})`, // Red to Orange
+          `rgba(${Math.round(255 - 127 * hueShift)}, 255, 0, ${alpha})`, // Orange to Yellow
+        ];
+        return variations[Math.floor(hueShift * 5)];
+      }
+    };
+
     return (
       <div
         className="absolute"
@@ -113,88 +71,207 @@ export default function RainbowCubesExercise() {
           style={{
             width: `${size}px`,
             height: `${size}px`,
+            animation: `${rotationAxis} 12s linear infinite`,
             transformStyle: "preserve-3d",
-            animation: `${rotation} 6s linear infinite`,
           }}
         >
-          {/* Front face */}
-          <div
-            className="absolute"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              background: `linear-gradient(45deg, ${baseColor}, #FFD700, ${baseColor})`,
+          {/* Six faces of the cube with rainbow colors */}
+          {[
+            {
+              name: "front",
               transform: `translateZ(${size / 2}px)`,
-              boxShadow: `0 0 30px ${baseColor}80`,
-            }}
-          />
-
-          {/* Back face */}
-          <div
-            className="absolute"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              background: `linear-gradient(-45deg, ${baseColor}, #FF69B4, ${baseColor})`,
+              colorShift: 0,
+            },
+            {
+              name: "back",
               transform: `rotateY(180deg) translateZ(${size / 2}px)`,
-            }}
-          />
-
-          {/* Right face */}
-          <div
-            className="absolute"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              background: `linear-gradient(90deg, ${baseColor}, #00BFFF, ${baseColor})`,
+              colorShift: 0.5,
+            },
+            {
+              name: "right",
               transform: `rotateY(90deg) translateZ(${size / 2}px)`,
-            }}
-          />
-
-          {/* Left face */}
-          <div
-            className="absolute"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              background: `linear-gradient(-90deg, ${baseColor}, #32CD32, ${baseColor})`,
+              colorShift: 0.2,
+            },
+            {
+              name: "left",
               transform: `rotateY(-90deg) translateZ(${size / 2}px)`,
-            }}
-          />
-
-          {/* Top face */}
-          <div
-            className="absolute"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              background: `linear-gradient(0deg, ${baseColor}, #9370DB, ${baseColor})`,
+              colorShift: 0.8,
+            },
+            {
+              name: "top",
               transform: `rotateX(90deg) translateZ(${size / 2}px)`,
-            }}
-          />
-
-          {/* Bottom face */}
-          <div
-            className="absolute"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              background: `linear-gradient(180deg, ${baseColor}, #FF4500, ${baseColor})`,
+              colorShift: 0.3,
+            },
+            {
+              name: "bottom",
               transform: `rotateX(-90deg) translateZ(${size / 2}px)`,
+              colorShift: 0.7,
+            },
+          ].map((face) => (
+            <div
+              key={face.name}
+              className="absolute"
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                background: `linear-gradient(45deg, ${getRainbowVariation(
+                  primaryColor,
+                  face.colorShift
+                )}, ${getRainbowVariation(
+                  primaryColor,
+                  (face.colorShift + 0.2) % 1
+                )})`,
+                transform: face.transform,
+                border: `2px solid ${getRainbowVariation(
+                  primaryColor,
+                  face.colorShift
+                )}`,
+                boxShadow: `
+                  inset 0 0 20px ${getRainbowVariation(
+                    primaryColor,
+                    face.colorShift
+                  )}40,
+                  0 0 20px ${getRainbowVariation(
+                    primaryColor,
+                    face.colorShift
+                  )}60
+                `,
+                opacity: 0.9,
+              }}
+            >
+              {/* Inner geometric pattern */}
+              <div
+                className="absolute inset-2"
+                style={{
+                  background: `conic-gradient(from 0deg, ${getRainbowVariation(
+                    primaryColor,
+                    face.colorShift
+                  )}, ${getRainbowVariation(
+                    primaryColor,
+                    (face.colorShift + 0.3) % 1
+                  )}, ${getRainbowVariation(
+                    primaryColor,
+                    (face.colorShift + 0.6) % 1
+                  )}, ${getRainbowVariation(primaryColor, face.colorShift)})`,
+                  clipPath: "polygon(20% 20%, 80% 20%, 80% 80%, 20% 80%)",
+                }}
+              />
+
+              {/* Center dot */}
+              <div
+                className="absolute w-3 h-3 rounded-full"
+                style={{
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  background: getRainbowVariation(
+                    primaryColor,
+                    (face.colorShift + 0.5) % 1
+                  ),
+                  boxShadow: `0 0 10px ${getRainbowVariation(
+                    primaryColor,
+                    (face.colorShift + 0.5) % 1
+                  )}`,
+                }}
+              />
+            </div>
+          ))}
+
+          {/* Trailing rainbow effect */}
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={`trail-${i}`}
+              className="absolute inset-0 rounded-sm opacity-30"
+              style={{
+                transform: `scale(${1 + i * 0.1}) translateZ(${-i * 10}px)`,
+                background: `linear-gradient(45deg, ${getRainbowVariation(
+                  primaryColor,
+                  i * 0.2
+                )}, transparent)`,
+                animation: `trailFade 2s ease-out infinite ${i * 0.2}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Surrounding rainbow particles */}
+        {[...Array(12)].map((_, i) => (
+          <div
+            key={`particle-${i}`}
+            className="absolute w-2 h-2 rounded-full"
+            style={{
+              left: `${50 + Math.cos((i * Math.PI) / 6) * 150}%`,
+              top: `${50 + Math.sin((i * Math.PI) / 6) * 150}%`,
+              transform: "translate(-50%, -50%)",
+              background: getRainbowVariation(primaryColor, i / 12),
+              boxShadow: `0 0 8px ${getRainbowVariation(primaryColor, i / 12)}`,
+              animation: `rainbowOrbit 8s linear infinite ${i * 0.5}s`,
             }}
           />
-        </div>
+        ))}
       </div>
     );
   };
 
   return (
-    <div className="relative w-screen h-screen bg-black overflow-hidden">
+    <ExerciseLayout
+      showInstructions={showInstructions}
+      instructionsConfig={{
+        title: "Rainbow Cubes",
+        titleColor: "text-rainbow-400",
+        borderColor: "border-purple-500",
+        className: "rainbow-gradient-border",
+      }}
+      homeButtonConfig={{
+        gradientFrom: "purple-600",
+        gradientTo: "pink-600",
+        gradientVia: "indigo-600",
+      }}
+      horizontalSeparation={horizontalSeparation}
+      verticalSeparation={verticalSeparation}
+      settings={settings}
+      isFullscreen={isFullscreen}
+    >
       <style jsx>{`
         .preserve-3d {
           transform-style: preserve-3d;
         }
+        .rainbow-gradient-border {
+          border: 2px solid;
+          border-image: linear-gradient(
+              45deg,
+              #ff0000,
+              #ff8000,
+              #ffff00,
+              #80ff00,
+              #00ff00,
+              #00ff80,
+              #00ffff,
+              #0080ff,
+              #0000ff,
+              #8000ff,
+              #ff00ff,
+              #ff0080
+            )
+            1;
+        }
         @keyframes rotateX {
+          from {
+            transform: rotateX(0deg);
+          }
+          to {
+            transform: rotateX(360deg);
+          }
+        }
+        @keyframes rotateY {
+          from {
+            transform: rotateY(0deg);
+          }
+          to {
+            transform: rotateY(360deg);
+          }
+        }
+        @keyframes rotateXY {
           from {
             transform: rotateX(0deg) rotateY(0deg);
           }
@@ -202,115 +279,77 @@ export default function RainbowCubesExercise() {
             transform: rotateX(360deg) rotateY(360deg);
           }
         }
-        @keyframes rotateY {
-          from {
-            transform: rotateY(0deg) rotateX(0deg);
+        @keyframes trailFade {
+          0% {
+            opacity: 0.5;
+            transform: scale(var(--scale)) translateZ(var(--z));
           }
-          to {
-            transform: rotateY(360deg) rotateX(360deg);
+          100% {
+            opacity: 0;
+            transform: scale(calc(var(--scale) * 1.5)) translateZ(var(--z));
           }
         }
-        @keyframes shimmer {
-          0%,
-          100% {
-            opacity: 0.8;
-            filter: brightness(1) hue-rotate(0deg);
+        @keyframes rainbowOrbit {
+          from {
+            transform: translate(-50%, -50%) rotate(0deg) translateX(120px)
+              rotate(0deg);
           }
-          50% {
-            opacity: 1;
-            filter: brightness(1.3) hue-rotate(180deg);
+          to {
+            transform: translate(-50%, -50%) rotate(360deg) translateX(120px)
+              rotate(-360deg);
           }
         }
       `}</style>
 
       {/* Red Rainbow Cube */}
       <RainbowCube
-        baseColor={getPureRedColor(settings.redIntensity)}
+        primaryColor={getPureRedColor(settings.redIntensity)}
         offsetX={-horizontalSeparation / 2}
         offsetY={-verticalSeparation / 2}
-        rotation="rotateX"
+        rotationAxis="rotateXY"
       />
 
       {/* Green Rainbow Cube */}
       <RainbowCube
-        baseColor={getPureGreenColor(settings.greenIntensity)}
+        primaryColor={getPureGreenColor(settings.greenIntensity)}
         offsetX={horizontalSeparation / 2}
         offsetY={verticalSeparation / 2}
-        rotation="rotateY"
+        rotationAxis="rotateY"
       />
 
-      {/* Floating geometric shapes background */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(12)].map((_, i) => (
+      {/* Rainbow prism background */}
+      <div className="absolute inset-0 opacity-20">
+        {[...Array(30)].map((_, i) => (
           <div
             key={i}
-            className="absolute opacity-20"
+            className="absolute w-1 h-1 rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              width: `${20 + Math.random() * 40}px`,
-              height: `${20 + Math.random() * 40}px`,
-              background: `linear-gradient(${Math.random() * 360}deg, 
-                ${i % 2 === 0 ? getPureRedColor(0.3) : getPureGreenColor(0.3)}, 
-                transparent)`,
-              animation: `shimmer ${
-                3 + Math.random() * 4
-              }s ease-in-out infinite ${Math.random() * 2}s`,
-              transform: `rotate(${Math.random() * 360}deg)`,
+              background: `hsl(${Math.random() * 360}, 70%, 60%)`,
+              boxShadow: `0 0 6px hsl(${Math.random() * 360}, 70%, 60%)`,
+              animation: `prismTwinkle ${
+                1 + Math.random() * 2
+              }s linear infinite ${Math.random() * 2}s`,
             }}
           />
         ))}
       </div>
 
-      {showInstructions && (
-        <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-95 text-white p-4 rounded-xl max-w-sm backdrop-blur-sm border-2 border-pink-500 shadow-lg shadow-pink-500/20">
-          <h3 className="text-lg font-bold mb-2 text-pink-400">
-            Rainbow Cubes
-          </h3>
-          <div className="text-sm space-y-1">
-            <p>
-              <strong className="text-red-400">← →</strong> Horizontal
-              separation
-            </p>
-            <p>
-              <strong className="text-green-400">↑ ↓</strong> Vertical
-              separation
-            </p>
-            <p>
-              <strong className="text-blue-400">+ -</strong> Increase/decrease
-              size
-            </p>
-            <p>
-              <strong className="text-red-400">R</strong> Cycle red intensity
-            </p>
-            <p>
-              <strong className="text-green-400">G</strong> Cycle green
-              intensity
-            </p>
-            <p>
-              <strong className="text-yellow-400">ESC</strong> Toggle
-              instructions
-            </p>
-          </div>
-          <div className="mt-3 text-xs text-gray-300">
-            <p>
-              H: {horizontalSeparation}px | V: {verticalSeparation}px
-            </p>
-            <p>
-              Size: {settings.objectSize.toFixed(1)}x | Red:{" "}
-              {Math.round(settings.redIntensity * 100)}% | Green:{" "}
-              {Math.round(settings.greenIntensity * 100)}%
-            </p>
-          </div>
-        </div>
-      )}
-
-      <Link
-        href="/"
-        className="absolute top-4 right-4 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 text-white px-4 py-2 rounded-xl hover:from-pink-700 hover:via-purple-700 hover:to-indigo-700 transition-all shadow-lg"
-      >
-        Home
-      </Link>
-    </div>
+      <style jsx>{`
+        @keyframes prismTwinkle {
+          0%,
+          80%,
+          100% {
+            opacity: 0.2;
+            transform: scale(1);
+          }
+          40% {
+            opacity: 1;
+            transform: scale(1.8);
+          }
+        }
+      `}</style>
+    </ExerciseLayout>
   );
 }

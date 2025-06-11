@@ -1,91 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import {
-  getSettings,
-  getPureRedColor,
-  getPureGreenColor,
-  increaseSize,
-  decreaseSize,
-  cycleRedIntensity,
-  cycleGreenIntensity,
-} from "../../lib/settings";
+import { getPureRedColor, getPureGreenColor } from "../../lib/settings";
+import { useExerciseControls } from "../../hooks/useExerciseControls";
+import ExerciseLayout from "../../components/ExerciseLayout";
 
 export default function PulsingDotsExercise() {
-  const [horizontalSeparation, setHorizontalSeparation] = useState(0);
-  const [verticalSeparation, setVerticalSeparation] = useState(0);
-  const [showInstructions, setShowInstructions] = useState(true);
-
-  // Settings
-  const [settings, setSettings] = useState({
-    objectSize: 1.0,
-    redIntensity: 0.8,
-    greenIntensity: 0.8,
-  });
-
-  // Load settings on component mount
-  useEffect(() => {
-    setSettings(getSettings());
-  }, []);
-
-  const MAX_HORIZONTAL_SEPARATION = 500;
-  const MAX_VERTICAL_SEPARATION = 500;
-  const STEP_SIZE = 4;
-
-  const handleKeyPress = useCallback((event: KeyboardEvent) => {
-    switch (event.key) {
-      case "ArrowLeft":
-        setHorizontalSeparation((prev) =>
-          Math.max(prev - STEP_SIZE, -MAX_HORIZONTAL_SEPARATION)
-        );
-        break;
-      case "ArrowRight":
-        setHorizontalSeparation((prev) =>
-          Math.min(prev + STEP_SIZE, MAX_HORIZONTAL_SEPARATION)
-        );
-        break;
-      case "ArrowUp":
-        setVerticalSeparation((prev) =>
-          Math.max(prev - STEP_SIZE, -MAX_VERTICAL_SEPARATION)
-        );
-        break;
-      case "ArrowDown":
-        setVerticalSeparation((prev) =>
-          Math.min(prev + STEP_SIZE, MAX_VERTICAL_SEPARATION)
-        );
-        break;
-      case "Escape":
-        setShowInstructions((prev) => !prev);
-        break;
-      case "+":
-      case "=":
-        event.preventDefault();
-        setSettings(increaseSize());
-        break;
-      case "-":
-      case "_":
-        event.preventDefault();
-        setSettings(decreaseSize());
-        break;
-      case "r":
-      case "R":
-        event.preventDefault();
-        setSettings(cycleRedIntensity());
-        break;
-      case "g":
-      case "G":
-        event.preventDefault();
-        setSettings(cycleGreenIntensity());
-        break;
-    }
-    event.preventDefault();
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleKeyPress]);
+  const {
+    horizontalSeparation,
+    verticalSeparation,
+    showInstructions,
+    isFullscreen,
+    settings,
+  } = useExerciseControls({ stepSize: 4 });
 
   const PulsingDot = ({
     color,
@@ -154,7 +80,22 @@ export default function PulsingDotsExercise() {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-black overflow-hidden">
+    <ExerciseLayout
+      showInstructions={showInstructions}
+      instructionsConfig={{
+        title: "Pulsing Dots",
+        titleColor: "text-green-400",
+        borderColor: "border-green-500",
+      }}
+      homeButtonConfig={{
+        gradientFrom: "green-600",
+        gradientTo: "blue-600",
+      }}
+      horizontalSeparation={horizontalSeparation}
+      verticalSeparation={verticalSeparation}
+      settings={settings}
+      isFullscreen={isFullscreen}
+    >
       <style jsx>{`
         @keyframes pulse {
           0%,
@@ -239,56 +180,6 @@ export default function PulsingDotsExercise() {
           }
         }
       `}</style>
-
-      {showInstructions && (
-        <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-95 text-white p-4 rounded-xl max-w-sm backdrop-blur-sm border border-green-500">
-          <h3 className="text-lg font-bold mb-2 text-green-400">
-            Pulsing Dots
-          </h3>
-          <div className="text-sm space-y-1">
-            <p>
-              <strong className="text-red-400">← →</strong> Horizontal
-              separation
-            </p>
-            <p>
-              <strong className="text-green-400">↑ ↓</strong> Vertical
-              separation
-            </p>
-            <p>
-              <strong className="text-blue-400">+ -</strong> Increase/decrease
-              size
-            </p>
-            <p>
-              <strong className="text-red-400">R</strong> Cycle red intensity
-            </p>
-            <p>
-              <strong className="text-green-400">G</strong> Cycle green
-              intensity
-            </p>
-            <p>
-              <strong className="text-yellow-400">ESC</strong> Toggle
-              instructions
-            </p>
-          </div>
-          <div className="mt-3 text-xs text-gray-300">
-            <p>
-              H: {horizontalSeparation}px | V: {verticalSeparation}px
-            </p>
-            <p>
-              Size: {settings.objectSize.toFixed(1)}x | Red:{" "}
-              {Math.round(settings.redIntensity * 100)}% | Green:{" "}
-              {Math.round(settings.greenIntensity * 100)}%
-            </p>
-          </div>
-        </div>
-      )}
-
-      <Link
-        href="/"
-        className="absolute top-4 right-4 bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-2 rounded-xl hover:from-green-700 hover:to-blue-700 transition-all shadow-lg"
-      >
-        Home
-      </Link>
-    </div>
+    </ExerciseLayout>
   );
 }

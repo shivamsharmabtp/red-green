@@ -1,5 +1,5 @@
 export interface ExerciseSettings {
-  objectSize: number; // Size multiplier for primary objects (0.5 to 2.0)
+  objectSize: number; // Size multiplier for primary objects (0.5 to 10.0)
   redIntensity: number; // Red color intensity/opacity (0.3 to 1.0)
   greenIntensity: number; // Green color intensity/opacity (0.3 to 1.0)
 }
@@ -14,7 +14,7 @@ const SETTINGS_KEY = "red-green-exercise-settings";
 
 // Size constraints
 export const MIN_SIZE = 0.5;
-export const MAX_SIZE = 2.0;
+export const MAX_SIZE = 10.0;
 export const SIZE_STEP = 0.1;
 
 // Intensity constraints

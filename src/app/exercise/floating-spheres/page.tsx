@@ -1,108 +1,31 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import {
-  getSettings,
-  getPureRedColor,
-  getPureGreenColor,
-  increaseSize,
-  decreaseSize,
-  cycleRedIntensity,
-  cycleGreenIntensity,
-} from "../../lib/settings";
+import { getPureRedColor, getPureGreenColor } from "../../lib/settings";
+import { useExerciseControls } from "../../hooks/useExerciseControls";
+import ExerciseLayout from "../../components/ExerciseLayout";
 
 export default function FloatingSpheresExercise() {
-  const [horizontalSeparation, setHorizontalSeparation] = useState(0);
-  const [verticalSeparation, setVerticalSeparation] = useState(0);
-  const [showInstructions, setShowInstructions] = useState(true);
-
-  // Settings
-  const [settings, setSettings] = useState({
-    objectSize: 1.0,
-    redIntensity: 0.8,
-    greenIntensity: 0.8,
-  });
-
-  // Load settings on component mount
-  useEffect(() => {
-    setSettings(getSettings());
-  }, []);
-
-  const MAX_HORIZONTAL_SEPARATION = 500;
-  const MAX_VERTICAL_SEPARATION = 500;
-  const STEP_SIZE = 6;
-
-  const handleKeyPress = useCallback((event: KeyboardEvent) => {
-    switch (event.key) {
-      case "ArrowLeft":
-        event.preventDefault();
-        setHorizontalSeparation((prev) =>
-          Math.max(prev - STEP_SIZE, -MAX_HORIZONTAL_SEPARATION)
-        );
-        break;
-      case "ArrowRight":
-        event.preventDefault();
-        setHorizontalSeparation((prev) =>
-          Math.min(prev + STEP_SIZE, MAX_HORIZONTAL_SEPARATION)
-        );
-        break;
-      case "ArrowUp":
-        event.preventDefault();
-        setVerticalSeparation((prev) =>
-          Math.max(prev - STEP_SIZE, -MAX_VERTICAL_SEPARATION)
-        );
-        break;
-      case "ArrowDown":
-        event.preventDefault();
-        setVerticalSeparation((prev) =>
-          Math.min(prev + STEP_SIZE, MAX_VERTICAL_SEPARATION)
-        );
-        break;
-      case "Escape":
-        event.preventDefault();
-        setShowInstructions((prev) => !prev);
-        break;
-      case "+":
-      case "=":
-        event.preventDefault();
-        setSettings(increaseSize());
-        break;
-      case "-":
-      case "_":
-        event.preventDefault();
-        setSettings(decreaseSize());
-        break;
-      case "r":
-      case "R":
-        event.preventDefault();
-        setSettings(cycleRedIntensity());
-        break;
-      case "g":
-      case "G":
-        event.preventDefault();
-        setSettings(cycleGreenIntensity());
-        break;
-    }
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleKeyPress]);
+  const {
+    horizontalSeparation,
+    verticalSeparation,
+    showInstructions,
+    isFullscreen,
+    settings,
+  } = useExerciseControls({ stepSize: 6 });
 
   const FloatingSphere = ({
     color,
     offsetX,
     offsetY,
-    shadowColor,
+    floatDirection,
   }: {
     color: string;
     offsetX: number;
     offsetY: number;
-    shadowColor: string;
+    floatDirection: "up" | "down";
   }) => {
-    const size = 96 * settings.objectSize; // 96px base size
+    const size = 144 * settings.objectSize;
+
     return (
       <div
         className="absolute"
@@ -113,45 +36,82 @@ export default function FloatingSpheresExercise() {
         }}
       >
         <div
-          className="relative rounded-full"
+          className="relative"
           style={{
             width: `${size}px`,
             height: `${size}px`,
-            background: `radial-gradient(circle at 30% 30%, ${color}ff, ${color}cc, ${color}88)`,
-            boxShadow: `
-              0 0 30px ${shadowColor}60,
-              inset -10px -10px 20px rgba(0, 0, 0, 0.3),
-              inset 10px 10px 20px rgba(255, 255, 255, 0.2),
-              0 20px 40px rgba(0, 0, 0, 0.5)
-            `,
-            animation: "float 4s ease-in-out infinite",
+            animation: `float${floatDirection} 5s ease-in-out infinite`,
           }}
         >
-          {/* Highlight */}
+          {/* Main sphere with 3D gradient */}
           <div
-            className="absolute rounded-full bg-gradient-to-br from-white to-transparent opacity-40"
+            className="absolute inset-0 rounded-full"
             style={{
-              width: `${size * 0.3}px`,
-              height: `${size * 0.3}px`,
-              top: `${size * 0.15}px`,
-              left: `${size * 0.2}px`,
+              background: `radial-gradient(circle at 30% 30%, ${color}ff, ${color}cc 40%, ${color}88 70%, ${color}44)`,
+              boxShadow: `
+                0 0 40px ${color}80,
+                inset -20px -20px 40px ${color}40,
+                inset 20px 20px 40px rgba(255, 255, 255, 0.2),
+                0 0 100px ${color}30
+              `,
             }}
           />
 
-          {/* Orbiting particles */}
-          {[...Array(6)].map((_, i) => (
+          {/* Highlight for 3D effect */}
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: `${size * 0.3}px`,
+              height: `${size * 0.3}px`,
+              top: `${size * 0.2}px`,
+              left: `${size * 0.25}px`,
+              background:
+                "radial-gradient(circle, rgba(255, 255, 255, 0.8), transparent 70%)",
+              animation: "highlight 3s ease-in-out infinite",
+            }}
+          />
+
+          {/* Orbital rings */}
+          {[...Array(3)].map((_, i) => (
             <div
-              key={i}
-              className="absolute rounded-full"
+              key={`ring-${i}`}
+              className="absolute border-2 rounded-full opacity-40"
               style={{
-                width: `${size * 0.08}px`,
-                height: `${size * 0.08}px`,
-                background: `radial-gradient(circle, ${shadowColor}, transparent)`,
-                top: "50%",
-                left: "50%",
+                width: `${size + i * 30}px`,
+                height: `${size + i * 30}px`,
+                top: `${-i * 15}px`,
+                left: `${-i * 15}px`,
+                borderColor: color,
+                transform: "rotateX(70deg)",
+                animation: `orbit 8s linear infinite ${i * 2}s`,
+              }}
+            />
+          ))}
+
+          {/* Floating particles */}
+          {[...Array(12)].map((_, i) => (
+            <div
+              key={`particle-${i}`}
+              className="absolute w-2 h-2 rounded-full"
+              style={{
+                background: color,
+                left: `${50 + Math.cos((i * Math.PI) / 6) * 120}%`,
+                top: `${50 + Math.sin((i * Math.PI) / 6) * 120}%`,
                 transform: "translate(-50%, -50%)",
-                animation: `orbit ${3 + i * 0.5}s linear infinite`,
-                animationDelay: `${i * 0.5}s`,
+                opacity: 0.6,
+                animation: `particleOrbit 6s linear infinite ${i * 0.5}s`,
+              }}
+            />
+          ))}
+
+          {/* Energy waves */}
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={`wave-${i}`}
+              className="absolute inset-0 rounded-full border opacity-30"
+              style={{
+                borderColor: color,
+                animation: `energyWave 4s ease-out infinite ${i * 1}s`,
               }}
             />
           ))}
@@ -161,123 +121,130 @@ export default function FloatingSpheresExercise() {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-black overflow-hidden">
+    <ExerciseLayout
+      showInstructions={showInstructions}
+      instructionsConfig={{
+        title: "Floating Spheres",
+        titleColor: "text-cyan-400",
+        borderColor: "border-cyan-500",
+      }}
+      homeButtonConfig={{
+        gradientFrom: "cyan-600",
+        gradientTo: "blue-700",
+        gradientVia: "teal-600",
+      }}
+      horizontalSeparation={horizontalSeparation}
+      verticalSeparation={verticalSeparation}
+      settings={settings}
+      isFullscreen={isFullscreen}
+    >
       <style jsx>{`
-        @keyframes float {
+        @keyframes floatup {
           0%,
           100% {
-            transform: translateY(0px) scale(1);
+            transform: translateY(0px) rotateX(0deg);
           }
           50% {
-            transform: translateY(-10px) scale(1.05);
+            transform: translateY(-30px) rotateX(15deg);
+          }
+        }
+        @keyframes floatdown {
+          0%,
+          100% {
+            transform: translateY(0px) rotateX(0deg);
+          }
+          50% {
+            transform: translateY(30px) rotateX(-15deg);
+          }
+        }
+        @keyframes highlight {
+          0%,
+          100% {
+            opacity: 0.6;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.2);
           }
         }
         @keyframes orbit {
           from {
-            transform: rotate(0deg) translateX(30px) rotate(0deg);
+            transform: rotateX(70deg) rotateZ(0deg);
           }
           to {
-            transform: rotate(360deg) translateX(30px) rotate(-360deg);
+            transform: rotateX(70deg) rotateZ(360deg);
+          }
+        }
+        @keyframes particleOrbit {
+          from {
+            transform: translate(-50%, -50%) rotate(0deg) translateX(100px)
+              rotate(0deg);
+          }
+          to {
+            transform: translate(-50%, -50%) rotate(360deg) translateX(100px)
+              rotate(-360deg);
+          }
+        }
+        @keyframes energyWave {
+          0% {
+            transform: scale(1);
+            opacity: 0.3;
+          }
+          100% {
+            transform: scale(3);
+            opacity: 0;
           }
         }
       `}</style>
 
-      {/* Red Sphere */}
+      {/* Red Floating Sphere */}
       <FloatingSphere
         color={getPureRedColor(settings.redIntensity)}
         offsetX={-horizontalSeparation / 2}
         offsetY={-verticalSeparation / 2}
-        shadowColor={getPureRedColor(settings.redIntensity)}
+        floatDirection="up"
       />
 
-      {/* Green Sphere */}
+      {/* Green Floating Sphere */}
       <FloatingSphere
         color={getPureGreenColor(settings.greenIntensity)}
         offsetX={horizontalSeparation / 2}
         offsetY={verticalSeparation / 2}
-        shadowColor={getPureGreenColor(settings.greenIntensity)}
+        floatDirection="down"
       />
 
-      {/* Background particles */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+      {/* Cosmic background */}
+      <div className="absolute inset-0 opacity-20">
+        {[...Array(50)].map((_, i) => (
           <div
-            key={`bg-${i}`}
-            className="absolute w-1 h-1 bg-white rounded-full opacity-20"
+            key={i}
+            className="absolute w-1 h-1 bg-white rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              animation: `twinkle ${2 + Math.random() * 3}s linear infinite ${
-                Math.random() * 2
-              }s`,
+              animation: `starTwinkle ${
+                1 + Math.random() * 3
+              }s linear infinite ${Math.random() * 2}s`,
             }}
           />
         ))}
       </div>
 
       <style jsx>{`
-        @keyframes twinkle {
+        @keyframes starTwinkle {
           0%,
+          80%,
           100% {
-            opacity: 0.1;
-            transform: scale(0.5);
+            opacity: 0.2;
+            transform: scale(1);
           }
-          50% {
-            opacity: 0.6;
-            transform: scale(1.2);
+          40% {
+            opacity: 1;
+            transform: scale(1.5);
           }
         }
       `}</style>
-
-      {showInstructions && (
-        <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-95 text-white p-4 rounded-xl max-w-sm backdrop-blur-sm">
-          <h3 className="text-lg font-bold mb-2 text-purple-300">
-            Floating Spheres
-          </h3>
-          <div className="text-sm space-y-1">
-            <p>
-              <strong className="text-blue-300">← →</strong> Horizontal
-              separation
-            </p>
-            <p>
-              <strong className="text-green-300">↑ ↓</strong> Vertical
-              separation
-            </p>
-            <p>
-              <strong className="text-blue-400">+ -</strong> Increase/decrease
-              size
-            </p>
-            <p>
-              <strong className="text-red-400">R</strong> Cycle red intensity
-            </p>
-            <p>
-              <strong className="text-green-400">G</strong> Cycle green
-              intensity
-            </p>
-            <p>
-              <strong className="text-yellow-300">ESC</strong> Toggle
-              instructions
-            </p>
-          </div>
-          <div className="mt-3 text-xs text-gray-300">
-            <p>
-              H: {horizontalSeparation}px | V: {verticalSeparation}px
-            </p>
-            <p>
-              Size: {settings.objectSize.toFixed(1)}x | Red:{" "}
-              {Math.round(settings.redIntensity * 100)}% | Green:{" "}
-              {Math.round(settings.greenIntensity * 100)}%
-            </p>
-          </div>
-        </div>
-      )}
-
-      <Link
-        href="/"
-        className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg"
-      >
-        Home
-      </Link>
-    </div>
+    </ExerciseLayout>
   );
 }
