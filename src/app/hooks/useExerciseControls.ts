@@ -5,8 +5,10 @@ import {
   getSettings,
   increaseSize,
   decreaseSize,
-  cycleRedIntensity,
-  cycleGreenIntensity,
+  increaseRedIntensity,
+  decreaseRedIntensity,
+  increaseGreenIntensity,
+  decreaseGreenIntensity,
   type ExerciseSettings,
 } from "../lib/settings";
 
@@ -225,12 +227,16 @@ export function useExerciseControls(options: UseExerciseControlsOptions = {}) {
           setSettings(decreaseSize());
           break;
         case "r":
+          setSettings(increaseRedIntensity());
+          break;
         case "R":
-          setSettings(cycleRedIntensity());
+          setSettings(decreaseRedIntensity());
           break;
         case "g":
+          setSettings(increaseGreenIntensity());
+          break;
         case "G":
-          setSettings(cycleGreenIntensity());
+          setSettings(decreaseGreenIntensity());
           break;
         case "f":
         case "F":

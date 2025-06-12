@@ -87,6 +87,46 @@ export function decreaseSize(): ExerciseSettings {
   return updateSetting("objectSize", parseFloat(newSize.toFixed(1)));
 }
 
+// Increase red intensity
+export function increaseRedIntensity(): ExerciseSettings {
+  const current = getSettings();
+  const newIntensity = Math.min(
+    current.redIntensity + INTENSITY_STEP,
+    MAX_INTENSITY
+  );
+  return updateSetting("redIntensity", parseFloat(newIntensity.toFixed(1)));
+}
+
+// Decrease red intensity
+export function decreaseRedIntensity(): ExerciseSettings {
+  const current = getSettings();
+  const newIntensity = Math.max(
+    current.redIntensity - INTENSITY_STEP,
+    MIN_INTENSITY
+  );
+  return updateSetting("redIntensity", parseFloat(newIntensity.toFixed(1)));
+}
+
+// Increase green intensity
+export function increaseGreenIntensity(): ExerciseSettings {
+  const current = getSettings();
+  const newIntensity = Math.min(
+    current.greenIntensity + INTENSITY_STEP,
+    MAX_INTENSITY
+  );
+  return updateSetting("greenIntensity", parseFloat(newIntensity.toFixed(1)));
+}
+
+// Decrease green intensity
+export function decreaseGreenIntensity(): ExerciseSettings {
+  const current = getSettings();
+  const newIntensity = Math.max(
+    current.greenIntensity - INTENSITY_STEP,
+    MIN_INTENSITY
+  );
+  return updateSetting("greenIntensity", parseFloat(newIntensity.toFixed(1)));
+}
+
 // Cycle red intensity (min -> max -> min)
 export function cycleRedIntensity(): ExerciseSettings {
   const current = getSettings();

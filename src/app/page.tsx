@@ -16,42 +16,20 @@ export default function Home() {
       color: "bg-blue-50 border-blue-200",
     },
     {
-      id: "floating-spheres",
-      name: "Floating Spheres",
-      description:
-        "3D-looking spheres with shadows and depth perception training",
-      difficulty: "Intermediate",
-      color: "bg-purple-50 border-purple-200",
-    },
-    {
-      id: "pulsing-dots",
-      name: "Pulsing Dots",
-      description:
-        "Animated dots that pulse and scale for dynamic focus training",
-      difficulty: "Beginner",
-      color: "bg-green-50 border-green-200",
-    },
-    {
-      id: "rainbow-cubes",
-      name: "Rainbow Cubes",
-      description: "Vibrant 3D cubes with gradient effects and rotation",
-      difficulty: "Advanced",
-      color: "bg-pink-50 border-pink-200",
-    },
-    {
-      id: "diamond-prisms",
-      name: "Diamond Prisms",
-      description: "Multi-faceted diamond shapes with prismatic color effects",
-      difficulty: "Intermediate",
-      color: "bg-yellow-50 border-yellow-200",
-    },
-    {
       id: "neon-rings",
       name: "Neon Rings",
       description:
         "Glowing circular rings with neon effects and smooth animations",
       difficulty: "Advanced",
       color: "bg-cyan-50 border-cyan-200",
+    },
+    {
+      id: "3d-car",
+      name: "3D Car",
+      description:
+        "Simple 3D car models that can be separated for strabismus training",
+      difficulty: "Advanced",
+      color: "bg-purple-50 border-purple-200",
     },
   ];
 
